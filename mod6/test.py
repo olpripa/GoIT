@@ -1,22 +1,8 @@
-from pathlib import Path
-folder = Path('./Test')
+import base64
 
-filename = folder / 'temp.txt'
+message = "Hello world!"
+message_bytes = message.encode("utf-8")
+base64_bytes = base64.b64encode(message_bytes)
+base64_message = base64_bytes.decode("utf-8")
 
-try:
-    with open(filename, 'r', encoding='utf-8') as file:
-        for line in file:
-            print(line, end='')
-except OSError as error:
-    print('File not found')
-finally:
-    print('Робота із файлом завершено')
-
-current_path = Path('.')
-
-print(current_path)
-print(current_path.cwd())
-
-import shutil
-
-print(shutil.get_archive_formats())
+print(base64_message)  # SGVsbG8gd29ybGQh

@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 import os
 import shutil
 from normalize import normalize
@@ -20,11 +21,11 @@ dict_files_name = {"images": [],
                    "others": []}
 
 
-# Lists of file extensions to return
-ext_unknown = []
-ext_no_unknown = []
+# Lists (set) of file extensions to return
+ext_known = set()
+ext_unknown = set()
 
-cur_dir = Path('D:\\TMP1')
+#cur_dir = Path('D:\\TMP')
 
 # List of folders to ignore
 
@@ -34,66 +35,94 @@ def folder_to_ignore(cur_dir, dict_groups):
     for k in dict_groups:
         list_f.append(Path((cur_dir), str(k)))
     return list_f
-    #     новий шлях до папки
-    #     target = Path(element_path.parent, normalize(element_path.name))
-    #     # print(f'>>>: {target}')
 
-
+# номарлізуємо та переносимо файли по групам
 def fd_rename_and_move(element_path):
-    global dict_files_name
-    ext = element_path.suffix
+    global dict_files_name, ext_known, ext_unknown
     target = None
-    n_name = normalize(element_path.name.rstrip(ext)) + ext
-    print(f'4. {element_path} is file {element_path.is_file()}')
+
+    if element_path.is_dir():
+        # Delete empty directory
+        if len(os.listdir(element_path)) == 0:
+            #print(f'4 parse_folder: This is empty folder - {element_path.name}')
+            shutil.rmtree(element_path)
+            #print(element_path)
+            return element_path.parent
+        else:
+            target = Path(element_path.parent, normalize(element_path.name))
+            #print(f'5 parse_folder: This is folder - {element_path.name} \n>>> {target}')
+            
+
+
     if element_path.is_file():
+        
+        ext = element_path.suffix
+        # формуємо шлях призначення
         target = Path(element_path.parent, normalize(element_path.name.rstrip(ext)) + ext)
+        unknown = True
         for group in dict_groups:
             if element_path.suffix.lstrip('.').lower() in dict_groups[group]:
-                dict_files_name[group].append(n_name)
+                unknown = False
+                # Заповнюємо список файлів по групам
+                dict_files_name[group].append(normalize(element_path.name.rstrip(ext)) + ext)
+                # Заповнюємо множину відомих розширень
+                ext_known.add(ext)
+                # змінюємо шлях призначення
                 target = Path(cur_dir, str(group), normalize(element_path.name.rstrip(ext)) + ext)
-                dir_to = cur_dir / group
+                # створюємо папки по групам
+                dir_to = cur_dir / group 
                 dir_to.mkdir(exist_ok=True)
-    fd_conflict(element_path, target)
+        if unknown:
+            ext_unknown.add(ext)
+        #print(f'6. parse_folder: This is file {element_path} \n>>> {target}')
+    
+    return fd_conflict(element_path, target)
 
 
 def fd_conflict(element_path, target):
-    print(f'5 {element_path} is file {element_path.is_file()}')
     
     try:
-        # if element_path.is_dir():
-        #     print(f'{element_path} >>> {target}')
-        #     element_path.rename(str(target))
-        # elif element_path.suffix.lstrip('.').lower() in dict_groups["archives"]:
-        #     print(f'!розпаковано: {element_path}')
-        #     shutil.unpack_archive(Path(element_path), str(target).rstrip(ext))
-        # else:
-        if element_path.is_file():
-            ext = element_path.suffix
+        if element_path.is_dir():
+            #print(f'fd1: {element_path} >>> {target}')
+            return element_path.rename(str(target))
+             
+        elif element_path.is_file():
             shutil.move(element_path, target)
-            #element_path.rename(str(target))
     except FileExistsError:
-        if element_path.is_file():
+        if element_path.is_dir():
+            #print(f'fd1: {element_path} >>> {target}')
+            element_path = element_path.rename(str(target))
+            #target = Path(str(target).rstrip(ext) + '_' + ext)
+
+        elif element_path.is_file():
+            #print(f'fd2: {element_path} >>> {target}')
+            ext = element_path.suffix
             target = Path(str(target).rstrip(ext) + '_' + ext)
             fd_conflict(element_path, target)
 
-        # if element_path.is_dir():
-        #     print(f'{element_path} >>> {target}')
-        #     target = Path(str(target) + "_")
-        #     fd_conflict(element_path, target)
-        # else:
-        #     target = Path(str(target).rstrip(ext) + '_' + ext)
-        #     fd_conflict(element_path, target)
-
+        
 def parse_folder_recursion(path):
     # recursion through directories
     for element_path in path.iterdir():
-        print(f'1. {element_path}')
+        
         if element_path.is_dir() and element_path not in folder_to_ignore(cur_dir, dict_groups):
-            print(f'2. {element_path}')
-            #fd_rename_and_move(element_path)
+            
+            element_path = fd_rename_and_move(element_path)
             parse_folder_recursion(element_path)  # рекурсія
         else:
-            print(f'3. {element_path}')
+            
             fd_rename_and_move(element_path)
 
-parse_folder_recursion(cur_dir)
+def main():
+    cur_dir = Path(sys.argv[1])
+    if os.path.exists(cur_dir) and cur_dir.is_dir():
+        print(f'Скрипт {__name__} по сортуванню файлів в папці {sys.argv[1]} запущено')
+        parse_folder_recursion(cur_dir)
+        print(f'Файли по групам {dict_files_name} \n Знайдено відомі розширення {ext_known} \n невідоімі розширення {ext_unknown}')
+    else:
+        print(f'папку {cur_dir} не знайдено')
+    
+
+if __name__ == "__main__":
+    main()
+
