@@ -25,7 +25,7 @@ dict_files_name = {"images": [],
 ext_known = set()
 ext_unknown = set()
 
-#cur_dir = Path('D:\\TMP')
+cur_dir = Path('D:\\TMP3')
 
 # List of folders to ignore
 
@@ -44,13 +44,13 @@ def fd_rename_and_move(element_path):
     if element_path.is_dir():
         # Delete empty directory
         if len(os.listdir(element_path)) == 0:
-            #print(f'4 parse_folder: This is empty folder - {element_path.name}')
+            print(f'4 parse_folder: This is empty folder - {element_path.name}')
             shutil.rmtree(element_path)
             #print(element_path)
             return element_path.parent
         else:
             target = Path(element_path.parent, normalize(element_path.name))
-            #print(f'5 parse_folder: This is folder - {element_path.name} \n>>> {target}')
+            print(f'5 parse_folder: This is folder - {element_path.name} \n>>> {target}')
             
 
 
@@ -74,7 +74,7 @@ def fd_rename_and_move(element_path):
                 dir_to.mkdir(exist_ok=True)
         if unknown:
             ext_unknown.add(ext)
-        #print(f'6. parse_folder: This is file {element_path} \n>>> {target}')
+        print(f'6. parse_folder: This is file {element_path} \n>>> {target}')
     
     return fd_conflict(element_path, target)
 
@@ -82,21 +82,29 @@ def fd_rename_and_move(element_path):
 def fd_conflict(element_path, target):
     
     try:
+        ext = element_path.suffix
         if element_path.is_dir():
-            #print(f'fd1: {element_path} >>> {target}')
+            print(f'fd1: {element_path} >>> {target}')
             return element_path.rename(str(target))
-             
+        elif element_path.suffix.lstrip('.').lower() in dict_groups['archives']:
+            print(f'fd2: {element_path} >>> {target}')
+            target_arch = Path(str(target).rstrip(ext))
+            shutil.unpack_archive(element_path, target_arch)
+            #shutil.rmtree(element_path)
         elif element_path.is_file():
+            print(f'fd3: {element_path} >>> {target}')
             shutil.move(element_path, target)
     except FileExistsError:
         if element_path.is_dir():
-            #print(f'fd1: {element_path} >>> {target}')
-            element_path = element_path.rename(str(target))
-            #target = Path(str(target).rstrip(ext) + '_' + ext)
+            print(f'fd4: {element_path} >>> {target}')
+            target = Path(str(target).rstrip(ext) + '_')
+            #element_path.rename(str(target))
+            return element_path.rename(str(target))
+            
 
         elif element_path.is_file():
-            #print(f'fd2: {element_path} >>> {target}')
-            ext = element_path.suffix
+            print(f'fd5: {element_path} >>> {target}')
+            
             target = Path(str(target).rstrip(ext) + '_' + ext)
             fd_conflict(element_path, target)
 
@@ -113,16 +121,4 @@ def parse_folder_recursion(path):
             
             fd_rename_and_move(element_path)
 
-def main():
-    cur_dir = Path(sys.argv[1])
-    if os.path.exists(cur_dir) and cur_dir.is_dir():
-        print(f'Скрипт {__name__} по сортуванню файлів в папці {sys.argv[1]} запущено')
-        parse_folder_recursion(cur_dir)
-        print(f'Файли по групам {dict_files_name} \n Знайдено відомі розширення {ext_known} \n невідоімі розширення {ext_unknown}')
-    else:
-        print(f'папку {cur_dir} не знайдено')
-    
-
-if __name__ == "__main__":
-    main()
-
+parse_folder_recursion(cur_dir)

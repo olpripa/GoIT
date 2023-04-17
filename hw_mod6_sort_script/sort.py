@@ -25,7 +25,7 @@ dict_files_name = {"images": [],
 ext_known = set()
 ext_unknown = set()
 
-#cur_dir = Path('D:\\TMP')
+cur_dir = Path('')
 
 # List of folders to ignore
 
@@ -78,17 +78,22 @@ def fd_rename_and_move(element_path):
 def fd_conflict(element_path, target):
     
     try:
+        ext = element_path.suffix
         if element_path.is_dir():
             return element_path.rename(str(target))
-             
-        elif element_path.is_file():
-            shutil.move(element_path, target)
-    except FileExistsError:
-        if element_path.is_dir():
-            element_path = element_path.rename(str(target))
+        elif element_path.suffix.lstrip('.').lower() in dict_groups['archives']:
+            target_arch = Path(str(target).rstrip(ext))
+            shutil.unpack_archive(element_path, target_arch)
 
         elif element_path.is_file():
-            ext = element_path.suffix
+            shutil.move(element_path, target)
+
+    except FileExistsError:
+        if element_path.is_dir():
+            target = Path(str(target).rstrip(ext) + '_')
+            return element_path.rename(str(target))
+        
+        elif element_path.is_file():
             target = Path(str(target).rstrip(ext) + '_' + ext)
             fd_conflict(element_path, target)
 
@@ -104,9 +109,10 @@ def parse_folder_recursion(path):
             fd_rename_and_move(element_path)
 
 def main():
+    global cur_dir
     cur_dir = Path(sys.argv[1])
     if os.path.exists(cur_dir) and cur_dir.is_dir():
-        print(f'Скрипт {__name__} по сортуванню файлів в папці {sys.argv[1]} запущено')
+        print(f'Скрипт {__name__} по сортуванню файлів в папці {cur_dir} запущено')
         parse_folder_recursion(cur_dir)
         print(f'Файли по групам {dict_files_name} \n Знайдено відомі розширення {ext_known} \n невідоімі розширення {ext_unknown}')
     else:
