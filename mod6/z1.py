@@ -1,7 +1,7 @@
 import os
 
 def total_salary(path):
-
+    open('salary.txt', 'r')
     fh = open(path, 'r')
     line = fh.read().splitlines()
     totl_salary = 0
@@ -14,7 +14,7 @@ def total_salary(path):
     return totl_salary     
 
 
-# print(os.getcwd())
-# print(os.path.abspath('salary.txt'))
-# print(total_salary('D:\ol.pripa\Documents\GitHub\Tutorial\mod6\salary.txt'))
-print(total_salary("salary.txt"))
+print(os.getcwd())
+print(os.path.abspath('salary.txt'))
+#print(total_salary('D:\goit\mod6\salary.txt'))
+#print(total_salary("salary.txt"))

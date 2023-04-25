@@ -26,7 +26,12 @@ def get_credentials_users(path):
     return users_list
 
 def encode_data_to_base64(data):
-    pass
+    user_list_b64 = []
+    for l in data:
+        upwd_b64_b = base64.b64encode(l.encode("utf-8"))
+        upwd_b64_str = upwd_b64_b.decode("utf-8")
+        user_list_b64.append(upwd_b64_str)
+    return user_list_b64
 
 
-get_credentials_users('./user_data.bin')
+encode_data_to_base64(get_credentials_users('./user_data.bin'))
