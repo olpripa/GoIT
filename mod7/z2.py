@@ -17,16 +17,12 @@ def get_description(key):
 
 
 def get_student_grade(option):
-    if option == "grade":
+    if option == 'grade':
         return get_grade
-    elif option == "description":
+    elif option == 'description':
         return get_description
     else:
         return None
 
 
-ECTS = 'F'
-gr = get_student_grade('grade')
-ds = get_student_grade('description')
-print(
-    f'Оцінка {ECTS} в балах = {gr(ECTS)} та відповідає {ds(ECTS)}')
+grade
